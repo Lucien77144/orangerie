@@ -1,13 +1,13 @@
 import { createBrowserRouter } from "react-router-dom";
-import { Home, Hello } from "./pages"; // index by default
+import { Home, Map } from "./pages"; // index by default
 
 export const router = createBrowserRouter([
     {
-        path: "/",
+        path: '*' || '/',
         element: <Home />,
     },
     {
-        path: "/hello",
-        element: <Hello />,
+        path: "/map",
+        element: <Map />,
     },
 ]);

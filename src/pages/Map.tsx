@@ -1,4 +1,4 @@
-export const Hello = () => {
+export const Map = () => {
     return (
         <div>
             Hello test

@@ -1,4 +1,3 @@
- 
 export const Home = () => {
     return (
         <div>
@@ -6,4 +5,3 @@ export const Home = () => {
         </div>
     )
 }
-
