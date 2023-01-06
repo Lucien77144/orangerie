@@ -1,0 +1,22 @@
+{
+  "name": "orangerie",
+  "version": "1.0.0",
+  "description": "BDDI Project 2023 (Bachelor 3) - Gobelins. Developers : Aurélien LOUVEL, Antoine DROYER, Lucien BOISSEAU--SABLE. Designers : Lucie BOUANA, Kylian MENDY.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LucienGobelins/orangerie.git"
+  },
+  "keywords": [
+    "orangerie"
+  ],
+  "author": "Developers : Aurélien LOUVEL, Antoine DROYER, Lucien BOISSEAU--SABLE. Designers : Lucie BOUANA, Kylian MENDY.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LucienGobelins/orangerie/issues"
+  },
+  "homepage": "https://github.com/LucienGobelins/orangerie#readme"
+}
