@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { DoubleSide, PerspectiveCamera } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { gsap } from "gsap";
 import { ref } from 'vue';
 
 const sizes = {
@@ -9,9 +10,10 @@ const sizes = {
   y: window.innerHeight,
   mapX: 4,
   mapY: 8,
+  mapZ: 1
 }
 
-var pos = ref({
+let pos = ref({
   lat: -1,
   long: -1
 });
@@ -39,19 +41,17 @@ const map = initMap();
 const arrow = initArrow();
 
 navigator.geolocation.watchPosition((position) => {
-  console.log("changed position");
-  
-  pos.value = {
-    lat: position.coords.latitude,
-    long: position.coords.longitude
-  };
+  // pos.value = {
+  //   lat: position.coords.latitude,
+  //   long: position.coords.longitude
+  // };
 });
 
 const env = new THREE.Group();
 env.add(map);
 
 const points = new THREE.Group();
-for (let i = 0; i < 4; i++) {
+for (let i = 0; i < 6; i++) {
   points.add(initPoint());
 }
 env.add(points)
@@ -62,14 +62,37 @@ scene.add( env );
 const animate = () => {
   window.requestAnimationFrame(animate);
 
-  env.position.y -= .01;
+  env.position.y -= .005;
 
-  arrowLookToNearest();
+  const nearest = getNearestPos();
+  gsap.to(arrow.rotation, {
+    y: -Math.atan2(nearest.y - arrow.position.y, nearest.x - arrow.position.x),
+    duration: .5
+  });
+
+  console.log(env);
+
+  gsap.to(camera.rotation, {
+    y: -(Math.PI/2.5 + Math.atan2(nearest.z - arrow.position.z, nearest.x - arrow.position.x))/10,
+    duration: .5
+  });
 
   // controls.update();
   renderer.render( scene, camera );
 }
 animate();
+
+// Events : 
+window.addEventListener("resize", () => {
+  sizes.x = window.innerWidth;
+  sizes.y = window.innerHeight;
+
+  camera.aspect = sizes.x / sizes.y;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize( sizes.x, sizes.y );
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
 
 // Fonctions : 
 
@@ -81,7 +104,7 @@ function initMap(): THREE.Mesh {
   });
   const mapMesh = new THREE.Mesh( mapGeometry, mapMaterial );
 
-  mapMesh.position.z -= 1;
+  mapMesh.position.z -= sizes.mapZ;
   
   return mapMesh;
 }
@@ -102,6 +125,7 @@ function initArrow(): THREE.Mesh {
     -.75
   );
   ArrowMesh.geometry.rotateX(Math.PI/2);
+  ArrowMesh.geometry.rotateY(Math.PI/2);
 
   return ArrowMesh;
 }
@@ -110,7 +134,11 @@ function setPosition(): void {
 
 }
 
-function arrowLookToNearest(): void {
+function handleCamera(nearest: THREE.Vector3) : void {
+
+}
+
+function getNearestPos(): THREE.Vector3 {
   const getRealPosition = (point: THREE.Vector3) => {
     return new THREE.Vector3(
       point.x + env.position.x,
@@ -120,9 +148,8 @@ function arrowLookToNearest(): void {
   }
   const nearest = points.children.sort((a, b) => {
     return getRealPosition(a.position).distanceTo(arrow.position) - getRealPosition(b.position).distanceTo(arrow.position);
-  })[0].position;
-
-  arrow.lookAt(getRealPosition(nearest));
+  })[0];
+  return getRealPosition(nearest.position);
 }
 
 function initPoint(): THREE.Mesh {
@@ -132,13 +159,11 @@ function initPoint(): THREE.Mesh {
   });
   const pointMesh = new THREE.Mesh(pointGeometry, pointMaterial);
 
-  // scene.add(pointMesh);
-
   pointMesh.scale.set(.25, .25, .25);
   pointMesh.position.set(
     Math.random()*sizes.mapX - sizes.mapX/2,
     Math.random()*sizes.mapY - sizes.mapY/2,
-    -.75
+    -sizes.mapZ
   );
   pointMesh.rotation.x = .25;
 
