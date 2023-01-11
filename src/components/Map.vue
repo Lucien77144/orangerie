@@ -10,10 +10,18 @@ import * as dat from 'lil-gui';
 const sizes = {
   x: window.innerWidth,
   y: window.innerHeight,
-  mapX: 4,
-  mapY: 8,
+  mapX: 8,
+  mapY: 16,
   mapZ: 0.5
 }
+
+const checkpoints = [
+  [ 50, 2.5],
+  [ 45, 7.5],
+  [ 67.75, 17.75],
+  [ 50, 22.5],
+  [ 44.5, 30.5],
+]
 
 let pos = ref({
   lat: -1,
@@ -54,15 +62,15 @@ navigator.geolocation.watchPosition((position) => {
 });
 
 const points = new THREE.Group();
-for (let i = 0; i < 6; i++) {
-  points.add(initPoint());
+for (let i = 0; i < checkpoints.length; i++) {
+  points.add(initPoint(checkpoints[i]));
 }
 
 // Environement :
 const env = new THREE.Group();
 env.add(map);
 env.add(points)
-env.position.y = sizes.mapX+.5;
+env.position.y = sizes.mapX;
 scene.add( env );
 
 // Camera group :
@@ -82,11 +90,11 @@ gui.add(env.position, 'y', 0, 8, .01).name('Map Y');
 gui.add(env.position, 'x', -2, 2, .01).name('Map X');
 
 // env.position.y = 3.45;
-setTimeout(() => {
+// setTimeout(() => {
   // gui.add(arrow.position, 'y', -10, 10, .01).name('Arrow Y');
   // gui.add(arrow.position, 'x', -10, 10, .01).name('Arrow X');
   // gui.add(arrow.position, 'z', -10, 10, .01).name('Arrow Z');
-}, 1000);
+// }, 1000);
 
 // Animate :
 const clock = new THREE.Clock();
@@ -103,7 +111,7 @@ const animate = () => {
     arrow && gsap.to(arrow.position, {
       x: distance * Math.cos(-angle),
       y: distance * Math.sin(-angle),
-      z: -sizes.mapZ + .075 + Math.cos(clock.getElapsedTime() * 2) * .01,
+      z: (-sizes.mapZ + .075 + (Math.cos(clock.getElapsedTime() * 2) * .01)) - (pos.value.y * .05),
       duration: 0
     });
 
@@ -118,7 +126,7 @@ const animate = () => {
     arrow && gsap.to(arrow.position, {
       x: 0,
       y: sizes.mapZ,
-      z: -sizes.mapZ + .025,
+      z: -sizes.mapZ + .025 + pos.value.y * .1,
       duration: .1
     });
 
@@ -131,6 +139,7 @@ const animate = () => {
   }
 
   camGroup.rotation.z = pos.value.x;
+  camGroup.rotation.x = pos.value.y * .05;
 
   renderer.render( scene, camera );
 }
@@ -165,7 +174,6 @@ function initMap(): THREE.Mesh {
 }
 
 function initArrow(): void {
-  // import gltf of arrow :
   const loader = new GLTFLoader();
   loader.load(
     '/models/map/arrow.glb',
@@ -204,7 +212,7 @@ function getNearestPos(): THREE.Vector3 {
   return getRealPosition(nearest.position);
 }
 
-function initPoint(): THREE.Mesh {
+function initPoint(coord = [50,0]): THREE.Mesh {
   const pointGeometry = new THREE.SphereGeometry( .1, 16, 16 );
   const pointMaterial = new THREE.MeshStandardMaterial({
     color: 0xFFC31E,
@@ -218,7 +226,10 @@ function initPoint(): THREE.Mesh {
     .25,
     .25,
   )
-  setPositionOnMap(pointMesh, 75, 10);
+  // setPositionOnMap(pointMesh, 75, 10);
+  // const coords = convertCoords(48.862599, 2.330223);
+  // const coords = convertCoords(48.865571, 2.327822);
+  setPositionOnMap(pointMesh, coord[1], coord[0]);
 
   return pointMesh;
 }
@@ -267,12 +278,54 @@ function init() {
   });
 }
 
-function setPositionOnMap(element:THREE.Mesh, x:number = 0, y:number = 0) {
+function setPositionOnMap(element:THREE.Mesh, y:number = 0, x:number = 0) {
   element.position.set(
     x/100 * sizes.mapX - sizes.mapX/2,
     y/100 * sizes.mapY - sizes.mapY/2,
     -sizes.mapZ
   );
+}
+
+function getLat(lat: number) {
+  const min = 48.861187;
+  const max = 48.866160;
+  return Math.floor((lat - min) / (max - min) * 100)/100;
+}
+function getLong(long:number) {
+  const min = 2.321835;
+  const max = 2.331851;
+  return Math.floor((long - min) / (max - min) * 100)/100;
+}
+
+function convertCoords(x:number, y:number) {
+  // (48.862599, 2.330223)
+  // (48.865571, 2.327822)
+  const mapLimits = {
+    tl: [ getLat(48.861187), getLong(2.330085) ],
+    tr: [ getLat(48.863679), getLong(2.331851) ],
+    br: [ getLat(48.866160), getLong(2.323597) ],
+    bl: [ getLat(48.863851), getLong(2.321835) ],
+  }
+  console.log(mapLimits);
+
+  const xValid = (x >= mapLimits.bl[0] && x <= mapLimits.br[0]) || (x >= mapLimits.tl[0] && x <= mapLimits.tr[0]);
+  const yValid = (y >= mapLimits.tl[1] && y <= mapLimits.bl[1]) || (y >= mapLimits.tr[1] && y <= mapLimits.br[1]);
+
+  console.log(xValid, yValid);
+
+  if (xValid && yValid) {
+    const xPercent = (x - mapLimits.tl[1]) / (mapLimits.tr[1] - mapLimits.tl[1]);
+    const yPercent = (y - mapLimits.tl[0]) / (mapLimits.bl[0] - mapLimits.tl[0]);
+    return {
+      x: xPercent * 100,
+      y: yPercent * 100,
+    }
+  } else {
+    return {
+      x: 50,
+      y: 0,
+    }
+  }
 }
 
 </script>
