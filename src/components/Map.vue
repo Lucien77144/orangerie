@@ -77,9 +77,9 @@ light.position.set( 0, 0, 0 );
 scene.add( light );
 
 
-// const gui = new dat.GUI()
-// gui.add(env.position, 'y', 0, 8, .01).name('Map Y');
-// gui.add(env.position, 'x', -2, 2, .01).name('Map X');
+const gui = new dat.GUI()
+gui.add(env.position, 'y', 0, 8, .01).name('Map Y');
+gui.add(env.position, 'x', -2, 2, .01).name('Map X');
 
 // env.position.y = 3.45;
 setTimeout(() => {
@@ -124,7 +124,7 @@ const animate = () => {
 
     arrow && gsap.to(arrow.rotation, {
       x: Math.PI/2 + (pos.value.y * .4),
-      y: Math.atan2(nearest.y - arrow.position.y, nearest.x - arrow.position.x) - pos.value.x,
+      y: Math.atan2(nearest.y - camGroup.position.y, nearest.x - camGroup.position.x) - pos.value.x,
       z: 0,
       duration: 0
     });
@@ -168,7 +168,7 @@ function initArrow(): void {
   // import gltf of arrow :
   const loader = new GLTFLoader();
   loader.load(
-    '/models/map/ArrowProjectMuseum.glb',
+    '/models/map/arrow.glb',
     (gltf: any) => {
       const ArrowMesh = gltf.scene.children[0];
       camGroup.add(ArrowMesh);
@@ -178,8 +178,6 @@ function initArrow(): void {
         sizes.mapZ,
         -sizes.mapZ
       );
-      ArrowMesh.rotation.x = Math.PI/2;
-      ArrowMesh.rotation.y = Math.PI/2;
 
       arrow = ArrowMesh;
     },
@@ -208,8 +206,10 @@ function getNearestPos(): THREE.Vector3 {
 
 function initPoint(): THREE.Mesh {
   const pointGeometry = new THREE.SphereGeometry( .1, 16, 16 );
-  const pointMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff0000
+  const pointMaterial = new THREE.MeshStandardMaterial({
+    color: 0xFFC31E,
+    metalness: .5,
+    roughness: 0.2,
   });
   const pointMesh = new THREE.Mesh(pointGeometry, pointMaterial);
 
@@ -218,16 +218,7 @@ function initPoint(): THREE.Mesh {
     .25,
     .25,
   )
-  // pointMesh.position.set(
-  //   Math.random()*sizes.mapX - sizes.mapX/2,
-  //   Math.random()*sizes.mapY - sizes.mapY/2,
-  //   -sizes.mapZ
-  // );
-  pointMesh.position.set(
-    0.2,
-    -sizes.mapY/3,
-    -sizes.mapZ
-  );
+  setPositionOnMap(pointMesh, 75, 10);
 
   return pointMesh;
 }
@@ -276,12 +267,12 @@ function init() {
   });
 }
 
-function setPositionOnMap(x:number = 0, y:number = 0): THREE.Vector3 {
-  return new THREE.Vector3(
+function setPositionOnMap(element:THREE.Mesh, x:number = 0, y:number = 0) {
+  element.position.set(
     x/100 * sizes.mapX - sizes.mapX/2,
     y/100 * sizes.mapY - sizes.mapY/2,
     -sizes.mapZ
-  );;
+  );
 }
 
 </script>
