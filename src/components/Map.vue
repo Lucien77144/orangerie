@@ -17,7 +17,7 @@ const sizes = {
 const checkpoints = [
   {
     x: 44.5,
-    y: 7.5,
+    y: 7.6,
     model: '/models/map/JournalProjectMuseum.glb',
   },
   {
@@ -26,21 +26,44 @@ const checkpoints = [
     model: '/models/map/CanvasMuseumLa_Maison_Bernot.glb',
   },
   {
-    x: 50,
-    y: 22.5,
+    x: 70,
+    y: 45,
     model: '/models/map/CanvasMuseumPortrait_de_Mademoiselle_Chanel.glb',
   },
   {
-    x: 44.5,
-    y: 30.5,
+    x: 45,
+    y: 56,
     model: '/models/map/CanvasMuseumPaullGuillaume.glb',
   },
   {
-    x: 27.5,
-    y: 40,
+    x: 13.75,
+    y: 99,
     model: '/models/map/CanvasMuseumDomenica.glb',
   },
-]
+];
+
+const clock = new THREE.Clock();
+const navigation = {
+  currentPoint: 0,
+  path : [
+    {
+      x: 0,
+      y: 0,
+    },
+    {
+      x: 10,
+      y: 0
+    },
+    {
+      x: 20,
+      y: 0
+    },
+    {
+      x: 60,
+      y: 0
+    }
+  ]
+}
 
 let pos = ref({
   lat: -1,
@@ -108,11 +131,6 @@ scene.add( spotLight );
 const light = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( light );
 
-// on scroll 
-window.addEventListener('scroll', () => {
-  
-});
-
 const gui = new dat.GUI()
 gui.add(env.position, 'y', -sizes.mapY/2, sizes.mapY/2, .01).name('Map Y');
 gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
@@ -124,8 +142,9 @@ gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
   // gui.add(arrow.position, 'z', -10, 10, .01).name('Arrow Z');
 // }, 1000);
 
+// travelOnMap();
+
 // Animate :
-const clock = new THREE.Clock();
 const animate = () => {
   window.requestAnimationFrame(animate);
 
@@ -266,8 +285,9 @@ function getRealPosition(point: THREE.Vector3): THREE.Vector3 {
 }
 
 function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
+  const scale = .25;
   const pointGroup = new THREE.Group();
-  const pointGeometry = new THREE.ConeGeometry( .1, .2, 8 );
+  const pointGeometry = new THREE.OctahedronGeometry( .2, 0);
   const pointMaterial = new THREE.MeshStandardMaterial({
     color: 0xFFC31E,
     metalness: .5,
@@ -277,11 +297,10 @@ function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
 
   pointGroup.add(pointMesh);
 
-  pointMesh.geometry.rotateX(Math.PI/2);
   pointMesh.scale.set(
-    .25,
-    .25,
-    .25,
+    scale/1.5,
+    scale/1.5,
+    scale,
   )
 
   const loader = new GLTFLoader();
@@ -322,10 +341,7 @@ function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
     }
   );
 
-  // setPositionOnMap(pointMesh, 75, 10);
-  // const coords = convertCoords(48.862599, 2.330223);
-  // const coords = convertCoords(48.865571, 2.327822);
-  setPositionOnMap(pointGroup, infos.y, infos.x, -sizes.mapZ + .0125);
+  setPositionOnMap(pointGroup, infos.y, infos.x, -sizes.mapZ);
 
   return pointGroup;
 }
@@ -380,6 +396,37 @@ function setPositionOnMap(element:THREE.Mesh | THREE.Group, y:number = 0, x:numb
     y/100 * sizes.mapY - sizes.mapY/2,
     z
   );
+}
+
+function travelOnMap() {
+  setCameraPosition(navigation.path[navigation.currentPoint].x, navigation.path[navigation.currentPoint].y, 3);
+}
+
+function setCameraPosition(x = 0, y = 0, speed = 1) {
+  const currentPos = env.position;
+  const newPos = {
+    x: (y+50)/100 * sizes.mapX - sizes.mapX/2,
+    y: (-x+100)/100 * sizes.mapY - sizes.mapY/2
+  }
+  const duration = getSpeedIndex( new THREE.Vector3(newPos.x, newPos.y, 0), currentPos ) * speed;
+
+  gsap.to(env.position, {
+    x: newPos.x,
+    y: newPos.y,
+    duration: duration,
+    ease: "none",
+  });
+
+  setTimeout(() => {
+    navigation.currentPoint++;
+    if (navigation.currentPoint < navigation.path.length) {
+      travelOnMap();
+    }
+  }, duration * 1000);
+}
+
+function getSpeedIndex(pos1: THREE.Vector3, pos2: THREE.Vector3) {
+  return pos1.distanceTo(pos2);
 }
 
 </script>
