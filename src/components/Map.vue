@@ -77,6 +77,8 @@ const map = initMap();
 // Initialiser la flèche de positionnement :
 let arrow: THREE.Mesh | void = initArrow();
 
+renderer.setClearColor( 0x000000, 0 );
+
 navigator.geolocation.watchPosition((position) => {
   // console.log(position);
   pos.value = {
@@ -214,11 +216,13 @@ window.addEventListener("resize", () => {
 
 function initMap(): THREE.Mesh {
   const mapGeometry = new THREE.PlaneGeometry( sizes.mapX, sizes.mapY );
-  const mapTexture = new THREE.TextureLoader().load( '/map.svg' );
+  const mapTexture = new THREE.TextureLoader().load( '/map.svg')
 
   const mapMaterial = new THREE.MeshBasicMaterial({
     map: mapTexture,
   });
+
+  mapMaterial.transparent = true;
 
   const mapMesh = new THREE.Mesh( mapGeometry, mapMaterial );
 
@@ -421,9 +425,8 @@ function convertCoords(x:number, y:number) {
 </script>
 
 <template>
-  <div id="panel" @click="init">
-    Start
-    {{ pos }}
+  <div id="panel">
+    <button @click="init">Start</button>
   </div>
 </template>
 
@@ -437,6 +440,7 @@ function convertCoords(x:number, y:number) {
     height: 100%;
     width: 100%;
     margin: 0;
+    background-color: red;
   }
   #panel {
     position: fixed;
