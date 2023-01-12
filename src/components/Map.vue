@@ -10,17 +10,42 @@ import * as dat from 'lil-gui';
 const sizes = {
   x: window.innerWidth,
   y: window.innerHeight,
-  mapX: 8,
-  mapY: 16,
+  mapX: 12,
+  mapY: 24,
   mapZ: 0.5
 }
 
 const checkpoints = [
-  [ 50, 2.5],
-  [ 45, 7.5],
-  [ 67.75, 17.75],
-  [ 50, 22.5],
-  [ 44.5, 30.5],
+  {
+    x: 50,
+    y: 2.5,
+    model: '',
+  },
+  {
+    x: 44.5,
+    y: 7.5,
+    model: '/models/map/tableau1.glb',
+  },
+  {
+    x: 67.75,
+    y: 17.75,
+    model: '/models/map/tableau1.glb',
+  },
+  {
+    x: 50,
+    y: 22.5,
+    model: '',
+  },
+  {
+    x: 44.5,
+    y: 30.5,
+    model: '',
+  },
+  {
+    x: 27.5,
+    y: 40,
+    model: '',
+  },
 ]
 
 let pos = ref({
@@ -86,8 +111,8 @@ scene.add( light );
 
 
 const gui = new dat.GUI()
-gui.add(env.position, 'y', 0, 8, .01).name('Map Y');
-gui.add(env.position, 'x', -2, 2, .01).name('Map X');
+gui.add(env.position, 'y', -sizes.mapY/2, sizes.mapY/2, .01).name('Map Y');
+gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
 
 // env.position.y = 3.45;
 // setTimeout(() => {
@@ -101,12 +126,20 @@ const clock = new THREE.Clock();
 const animate = () => {
   window.requestAnimationFrame(animate);
 
-  const nearest = getNearestPos();
-  const dist = Math.sqrt(Math.abs(nearest.x - camera.position.x)**2 + Math.abs(nearest.y - camera.position.y)**2);
+  const nearest = getNearest();
+  const nearestPos = getRealPosition(nearest.position);
+  const dist = Math.sqrt(Math.abs(nearestPos.x - camera.position.x)**2 + Math.abs(nearestPos.y - camera.position.y)**2);
 
+  gsap.to(nearest.rotation, {
+    z: pos.value.x,
+    duration: 0
+  });
+
+  console.log(nearest.children[1]);
+  
   if ((dist < 1) && (dist > -1)) {
-    const angle = pos.value.x - Math.atan2(nearest.y - camera.position.y, nearest.x - camera.position.x);
-    const distance = camera.position.distanceTo(nearest);
+    const angle = pos.value.x - Math.atan2(nearestPos.y - camera.position.y, nearestPos.x - camera.position.x);
+    const distance = camera.position.distanceTo(nearestPos);
 
     arrow && gsap.to(arrow.position, {
       x: distance * Math.cos(-angle),
@@ -132,7 +165,7 @@ const animate = () => {
 
     arrow && gsap.to(arrow.rotation, {
       x: Math.PI/2 + (pos.value.y * .4),
-      y: Math.atan2(nearest.y - camGroup.position.y, nearest.x - camGroup.position.x) - pos.value.x,
+      y: Math.atan2(nearestPos.y - camGroup.position.y, nearestPos.x - camGroup.position.x) - pos.value.x,
       z: 0,
       duration: 0
     });
@@ -165,8 +198,8 @@ function initMap(): THREE.Mesh {
 
   const mapMaterial = new THREE.MeshBasicMaterial({
     map: mapTexture,
-    side: DoubleSide
   });
+
   const mapMesh = new THREE.Mesh( mapGeometry, mapMaterial );
 
   mapMesh.position.z -= sizes.mapZ;
@@ -198,22 +231,23 @@ function initArrow(): void {
   );
 }
 
-function getNearestPos(): THREE.Vector3 {
-  const getRealPosition = (point: THREE.Vector3) => {
-    return new THREE.Vector3(
-      point.x + env.position.x,
-      point.y + env.position.y,
-      point.z + env.position.z
-    );
-  }
-  const nearest = points.children.sort((a, b) => {
+function getNearest() {
+  return points.children.sort((a, b) => {
     return getRealPosition(a.position).distanceTo(camera.position) - getRealPosition(b.position).distanceTo(camera.position);
-  })[0];
-  return getRealPosition(nearest.position);
+  })[0];;
 }
 
-function initPoint(coord = [50,0]): THREE.Mesh {
-  const pointGeometry = new THREE.SphereGeometry( .1, 16, 16 );
+function getRealPosition(point: THREE.Vector3): THREE.Vector3 {
+  return new THREE.Vector3(
+    point.x + env.position.x,
+    point.y + env.position.y,
+    point.z + env.position.z
+  );
+}
+
+function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
+  const pointGroup = new THREE.Group();
+  const pointGeometry = new THREE.ConeGeometry( .05, .1, 8 );
   const pointMaterial = new THREE.MeshStandardMaterial({
     color: 0xFFC31E,
     metalness: .5,
@@ -221,17 +255,47 @@ function initPoint(coord = [50,0]): THREE.Mesh {
   });
   const pointMesh = new THREE.Mesh(pointGeometry, pointMaterial);
 
+  pointGroup.add(pointMesh);
+
+  pointMesh.geometry.rotateX(Math.PI/2);
   pointMesh.scale.set(
     .25,
     .25,
     .25,
   )
+
+  const loader = new GLTFLoader();
+  loader.load(
+    infos.model,
+    (gltf: any) => {
+      const painting = gltf.scene.children[0];
+      pointGroup.add(painting);
+      painting.scale.set(0.05, 0.05, 0.05);
+      painting.rotation.set(
+        Math.PI/2,
+        0,
+        0
+      );
+      painting.position.set(
+        0,
+        0,
+        .25
+      );
+    },
+    (xhr: any) => {
+      // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    },
+    (error: any) => {
+      console.log('An error happened');
+    }
+  );
+
   // setPositionOnMap(pointMesh, 75, 10);
   // const coords = convertCoords(48.862599, 2.330223);
   // const coords = convertCoords(48.865571, 2.327822);
-  setPositionOnMap(pointMesh, coord[1], coord[0]);
+  setPositionOnMap(pointGroup, infos.y, infos.x, -sizes.mapZ + .0125);
 
-  return pointMesh;
+  return pointGroup;
 }
 
 function deviceOrientationPermission() {
@@ -278,11 +342,11 @@ function init() {
   });
 }
 
-function setPositionOnMap(element:THREE.Mesh, y:number = 0, x:number = 0) {
+function setPositionOnMap(element:THREE.Mesh | THREE.Group, y:number = 0, x:number = 0, z:number = -sizes.mapZ) {
   element.position.set(
     x/100 * sizes.mapX - sizes.mapX/2,
     y/100 * sizes.mapY - sizes.mapY/2,
-    -sizes.mapZ
+    z
   );
 }
 
