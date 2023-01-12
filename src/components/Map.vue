@@ -80,7 +80,6 @@ let arrow: THREE.Mesh | void = initArrow();
 renderer.setClearColor( 0x000000, 0 );
 
 navigator.geolocation.watchPosition((position) => {
-  // console.log(position);
   pos.value = {
     ...pos.value,
     lat: position.coords.latitude,
@@ -105,12 +104,10 @@ const camGroup = new THREE.Group();
 camGroup.add(camera);
 scene.add( camGroup );
 
-
 // Lights :
 const light = new THREE.PointLight( 0xffffff, 1, 100 );
 light.position.set( 0, 0, 0 );
 scene.add( light );
-
 
 const gui = new dat.GUI()
 gui.add(env.position, 'y', -sizes.mapY/2, sizes.mapY/2, .01).name('Map Y');
@@ -123,7 +120,6 @@ gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
   // gui.add(arrow.position, 'z', -10, 10, .01).name('Arrow Z');
 // }, 1000);
 
-// Animate :
 const clock = new THREE.Clock();
 const animate = () => {
   window.requestAnimationFrame(animate);
@@ -211,8 +207,6 @@ window.addEventListener("resize", () => {
   renderer.setSize( sizes.x, sizes.y );
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
-
-// Fonctions : 
 
 function initMap(): THREE.Mesh {
   const mapGeometry = new THREE.PlaneGeometry( sizes.mapX, sizes.mapY );
@@ -380,48 +374,6 @@ function setPositionOnMap(element:THREE.Mesh | THREE.Group, y:number = 0, x:numb
   );
 }
 
-function getLat(lat: number) {
-  const min = 48.861187;
-  const max = 48.866160;
-  return Math.floor((lat - min) / (max - min) * 100)/100;
-}
-function getLong(long:number) {
-  const min = 2.321835;
-  const max = 2.331851;
-  return Math.floor((long - min) / (max - min) * 100)/100;
-}
-
-function convertCoords(x:number, y:number) {
-  // (48.862599, 2.330223)
-  // (48.865571, 2.327822)
-  const mapLimits = {
-    tl: [ getLat(48.861187), getLong(2.330085) ],
-    tr: [ getLat(48.863679), getLong(2.331851) ],
-    br: [ getLat(48.866160), getLong(2.323597) ],
-    bl: [ getLat(48.863851), getLong(2.321835) ],
-  }
-  console.log(mapLimits);
-
-  const xValid = (x >= mapLimits.bl[0] && x <= mapLimits.br[0]) || (x >= mapLimits.tl[0] && x <= mapLimits.tr[0]);
-  const yValid = (y >= mapLimits.tl[1] && y <= mapLimits.bl[1]) || (y >= mapLimits.tr[1] && y <= mapLimits.br[1]);
-
-  console.log(xValid, yValid);
-
-  if (xValid && yValid) {
-    const xPercent = (x - mapLimits.tl[1]) / (mapLimits.tr[1] - mapLimits.tl[1]);
-    const yPercent = (y - mapLimits.tl[0]) / (mapLimits.bl[0] - mapLimits.tl[0]);
-    return {
-      x: xPercent * 100,
-      y: yPercent * 100,
-    }
-  } else {
-    return {
-      x: 50,
-      y: 0,
-    }
-  }
-}
-
 </script>
 
 <template>
@@ -440,7 +392,9 @@ function convertCoords(x:number, y:number) {
     height: 100%;
     width: 100%;
     margin: 0;
-    background-color: red;
+    background-color: #141008;
+    background: url(/background.jpg) no-repeat center center fixed;
+    background-size: cover;
   }
   #panel {
     position: fixed;
