@@ -135,7 +135,18 @@ const animate = () => {
     duration: 0
   });
 
-  console.log(nearest.children[1]);
+  points.children.forEach((p: any) => {
+    if(p !== nearest) {
+      p.children[1]?.traverse((o: any) => {
+        if (o.isMesh && o?.material?.opacity !== 0) {
+          gsap.to(o.material, {
+            opacity: 0,
+            duration: 1
+          });
+        }
+      });
+    }
+  });
   
   if ((dist < 1) && (dist > -1)) {
     const angle = pos.value.x - Math.atan2(nearestPos.y - camera.position.y, nearestPos.x - camera.position.x);
@@ -153,6 +164,15 @@ const animate = () => {
       y: arrow.rotation.y + .01,
       z: -Math.PI/2,
       duration: 0
+    });
+
+    nearest.children[1]?.traverse((o: any) => {
+      if (o.isMesh && o?.material?.opacity !== 1) {
+        gsap.to(o.material, {
+          opacity: 1,
+          duration: 1
+        });
+      }
     });
 
   } else {
@@ -281,6 +301,12 @@ function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
         0,
         .25
       );
+      painting.traverse((o: any) => {
+        if (o.isMesh) {
+          o.material.transparent = true;
+          o.material.opacity = 0;
+        }
+      });
     },
     (xhr: any) => {
       // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
