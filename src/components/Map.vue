@@ -137,19 +137,6 @@ const animate = () => {
     z: pos.value.x,
     duration: 0
   });
-
-  points.children.forEach((p: any) => {
-    if((p !== nearest) || ((dist > 1) && (dist < -1))) {
-      p.children[1]?.traverse((o: any) => {
-        if (o.isMesh && o?.material?.opacity !== 0) {
-          gsap.to(o.material, {
-            opacity: 0,
-            duration: 1
-          });
-        }
-      });
-    }
-  });
   
   if ((dist < 1) && (dist > -1)) {
     const angle = pos.value.x - Math.atan2(nearestPos.y - camera.position.y, nearestPos.x - camera.position.x);
@@ -158,7 +145,7 @@ const animate = () => {
     arrow && gsap.to(arrow.position, {
       x: distance * Math.cos(-angle),
       y: distance * Math.sin(-angle),
-      z: (-sizes.mapZ + .075 + (Math.cos(clock.getElapsedTime() * 2) * .01)) - (pos.value.y * .05),
+      z: (-sizes.mapZ + .075 + (Math.cos(clock.getElapsedTime() * 2) * .01)),
       duration: 0
     });
 
@@ -179,15 +166,26 @@ const animate = () => {
     });
 
   } else {
+    points.children.forEach((p: any) => {
+      p.children[1]?.traverse((o: any) => {
+        if (o.isMesh && o?.material?.opacity !== 0) {
+          gsap.to(o.material, {
+            opacity: 0,
+            duration: 1
+          });
+        }
+      });
+    });
+
     arrow && gsap.to(arrow.position, {
       x: 0,
       y: sizes.mapZ,
-      z: -sizes.mapZ + .025 + pos.value.y * .1,
+      z: -sizes.mapZ + .025 + pos.value.y * .05,
       duration: .1
     });
 
     arrow && gsap.to(arrow.rotation, {
-      x: Math.PI/2 + (pos.value.y * .4),
+      x: Math.PI/2 + (pos.value.y * .2),
       y: Math.atan2(nearestPos.y - camGroup.position.y, nearestPos.x - camGroup.position.x) - pos.value.x,
       z: 0,
       duration: 0
@@ -195,7 +193,6 @@ const animate = () => {
   }
 
   camGroup.rotation.z = pos.value.x;
-  camGroup.rotation.x = pos.value.y * .05;
 
   renderer.render( scene, camera );
 }
@@ -293,9 +290,6 @@ function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
     (gltf: any) => {
       const painting = gltf.scene;
       pointGroup.add(painting);
-
-      const bounding = new THREE.Box3().setFromObject(painting);
-      const paintingH = bounding.max.y - bounding.min.y;
 
       const scale = 0.1;
       painting.scale.set(
