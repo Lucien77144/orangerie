@@ -43,27 +43,6 @@ const checkpoints = [
 ];
 
 const clock = new THREE.Clock();
-const navigation = {
-  currentPoint: 0,
-  path : [
-    {
-      x: 0,
-      y: 0,
-    },
-    {
-      x: 10,
-      y: 0
-    },
-    {
-      x: 20,
-      y: 0
-    },
-    {
-      x: 60,
-      y: 0
-    }
-  ]
-}
 
 let pos = ref({
   lat: -1,
@@ -113,6 +92,59 @@ env.add(points)
 env.position.y = sizes.mapX;
 scene.add( env );
 
+const navigation = {
+  currentPoint: 0,
+  path : [
+    {
+      x: 7,
+      y: 2,
+    },
+    {
+      x: 15,
+      y: -2
+    },
+    {
+      x: 19,
+      y: -10
+    },
+    {
+      x: 19,
+      y: -19.5
+    },
+    {
+      x: 44.5,
+      y: -19
+    },
+    {
+      x: 44.5,
+      y: 0
+    },
+    {
+      x: 74,
+      y: 3
+    },
+    {
+      x: 80,
+      y: 15
+    },
+    {
+      x: 82.5,
+      y: 40
+    },
+    {
+      x: 83.5,
+      y: 40
+    },
+    {
+      x: 83.5,
+      y: 35.5
+    }, {
+      x: 97,
+      y: 35.5
+    }
+  ]
+}
+
 // Camera group :
 const camGroup = new THREE.Group();
 camGroup.add(camera);
@@ -131,9 +163,10 @@ scene.add( spotLight );
 const light = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( light );
 
-const gui = new dat.GUI()
-gui.add(env.position, 'y', -sizes.mapY/2, sizes.mapY/2, .01).name('Map Y');
-gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
+// const gui = new dat.GUI()
+// gui.add(env.position, 'y', -sizes.mapY/2, sizes.mapY/2, .01).name('Map Y');
+// gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
+// gui.add(camera.rotation, 'y', -Math.PI, Math.PI, .01).name('Camera X');
 
 // env.position.y = 3.45;
 // setTimeout(() => {
@@ -142,7 +175,7 @@ gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
   // gui.add(arrow.position, 'z', -10, 10, .01).name('Arrow Z');
 // }, 1000);
 
-// travelOnMap();
+travelOnMap();
 
 // Animate :
 const animate = () => {
@@ -324,7 +357,7 @@ function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
       painting.position.set(
         0,
         0,
-        .15
+        .25
       );
       painting.traverse((o: any) => {
         if (o.isMesh) {
@@ -402,7 +435,7 @@ function travelOnMap() {
   setCameraPosition(navigation.path[navigation.currentPoint].x, navigation.path[navigation.currentPoint].y, 3);
 }
 
-function setCameraPosition(x = 0, y = 0, speed = 1) {
+function setCameraPosition(x = 0, y = 0, speed = 3) {
   const currentPos = env.position;
   const newPos = {
     x: (y+50)/100 * sizes.mapX - sizes.mapX/2,
