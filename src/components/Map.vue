@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import * as THREE from 'three';
-import { DoubleSide, PerspectiveCamera, ZeroCurvatureEnding } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { PerspectiveCamera } from 'three';
 import { gsap } from "gsap";
 import { ref } from 'vue';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -17,34 +16,29 @@ const sizes = {
 
 const checkpoints = [
   {
-    x: 50,
-    y: 2.5,
-    model: '',
-  },
-  {
     x: 44.5,
     y: 7.5,
-    model: '/models/map/tableau1.glb',
+    model: '/models/map/JournalProjectMuseum.glb',
   },
   {
     x: 67.75,
     y: 17.75,
-    model: '/models/map/tableau1.glb',
+    model: '/models/map/CanvasMuseumLa_Maison_Bernot.glb',
   },
   {
     x: 50,
     y: 22.5,
-    model: '',
+    model: '/models/map/CanvasMuseumPortrait_de_Mademoiselle_Chanel.glb',
   },
   {
     x: 44.5,
     y: 30.5,
-    model: '',
+    model: '/models/map/CanvasMuseumPaullGuillaume.glb',
   },
   {
     x: 27.5,
     y: 40,
-    model: '',
+    model: '/models/map/CanvasMuseumDomenica.glb',
   },
 ]
 
@@ -63,7 +57,6 @@ const camera = new PerspectiveCamera(
   1000
 );
 
-// Créer une fonction "setPosition" qui prend en entrée le x, y (et potentiellement z) en pourcentage pour positionner l'utilisateur sur la carte.
 camera.rotation.x = Math.PI/2;
 camera.position.z = -sizes.mapZ/2;
 
@@ -72,9 +65,7 @@ renderer.setSize( sizes.x, sizes.y );
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.getElementById("app")?.appendChild( renderer.domElement );
 
-// Initialiser la map :
 const map = initMap();
-// Initialiser la flèche de positionnement :
 let arrow: THREE.Mesh | void = initArrow();
 
 renderer.setClearColor( 0x000000, 0 );
@@ -105,9 +96,22 @@ camGroup.add(camera);
 scene.add( camGroup );
 
 // Lights :
-const light = new THREE.PointLight( 0xffffff, 1, 100 );
-light.position.set( 0, 0, 0 );
+const spotLight = new THREE.SpotLight( 0xffffff, 1 );
+spotLight.position.set( -1, -1, 1 );
+spotLight.rotation.set(
+  -Math.PI/2,
+  0,
+  0
+);
+scene.add( spotLight );
+
+const light = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( light );
+
+// on scroll 
+window.addEventListener('scroll', () => {
+  
+});
 
 const gui = new dat.GUI()
 gui.add(env.position, 'y', -sizes.mapY/2, sizes.mapY/2, .01).name('Map Y');
@@ -120,6 +124,7 @@ gui.add(env.position, 'x', -sizes.mapX/2, sizes.mapX/2, .01).name('Map X');
   // gui.add(arrow.position, 'z', -10, 10, .01).name('Arrow Z');
 // }, 1000);
 
+// Animate :
 const clock = new THREE.Clock();
 const animate = () => {
   window.requestAnimationFrame(animate);
@@ -134,7 +139,7 @@ const animate = () => {
   });
 
   points.children.forEach((p: any) => {
-    if(p !== nearest) {
+    if((p !== nearest) || ((dist > 1) && (dist < -1))) {
       p.children[1]?.traverse((o: any) => {
         if (o.isMesh && o?.material?.opacity !== 0) {
           gsap.to(o.material, {
@@ -265,7 +270,7 @@ function getRealPosition(point: THREE.Vector3): THREE.Vector3 {
 
 function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
   const pointGroup = new THREE.Group();
-  const pointGeometry = new THREE.ConeGeometry( .05, .1, 8 );
+  const pointGeometry = new THREE.ConeGeometry( .1, .2, 8 );
   const pointMaterial = new THREE.MeshStandardMaterial({
     color: 0xFFC31E,
     metalness: .5,
@@ -286,9 +291,18 @@ function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
   loader.load(
     infos.model,
     (gltf: any) => {
-      const painting = gltf.scene.children[0];
+      const painting = gltf.scene;
       pointGroup.add(painting);
-      painting.scale.set(0.05, 0.05, 0.05);
+
+      const bounding = new THREE.Box3().setFromObject(painting);
+      const paintingH = bounding.max.y - bounding.min.y;
+
+      const scale = 0.1;
+      painting.scale.set(
+        scale,
+        scale,
+        scale,
+      );
       painting.rotation.set(
         Math.PI/2,
         0,
@@ -297,7 +311,7 @@ function initPoint(infos = { x:50, y:0, model: '' }): THREE.Group {
       painting.position.set(
         0,
         0,
-        .25
+        .15
       );
       painting.traverse((o: any) => {
         if (o.isMesh) {
@@ -389,7 +403,7 @@ function setPositionOnMap(element:THREE.Mesh | THREE.Group, y:number = 0, x:numb
     position: fixed;
     top: 0;
     left: 0;
-    height: 100%;
+    height: 200vh;
     width: 100%;
     margin: 0;
     background-color: #141008;
