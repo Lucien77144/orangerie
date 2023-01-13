@@ -6,7 +6,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/:catchAll(.*)',
     name: 'Home',
-    component: HelloWorldVue
+    component: MapVue
   },
   {
     path: '/map',
